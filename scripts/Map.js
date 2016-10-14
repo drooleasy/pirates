@@ -355,7 +355,6 @@ Map.prototype.moveHero = function(offset_x, offset_y){
 	}
 	// ne se déplacer que sur l'eau
 	if(this.getTile(target_x, target_y) !== "~"){
-		console.log(this.getTile(target_x, target_y));
 		return;
 	}
 	// modifier la carte
