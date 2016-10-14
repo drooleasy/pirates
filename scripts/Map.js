@@ -1,15 +1,21 @@
 // classe gérant le contenu et l'affichage de la carte
-function Map(mapText, spriteMgr){
+function Map(mapText, spriteMgr, viewWidth, viewHeight){
 	
 	
 	this.spriteMgr = spriteMgr;
 	
 	var mapLines = mapText.split("\n");
 	
+	this.viewWidth = viewWidth;
+	this.viewHeight = viewHeight;
+	
+	// coordonnée du héros
+	this.heroCoords = [0,0];
+	
 	// hauteur de la carte
 	// calculée dans la boucle pour ne pas de tenir d'une ligne vide en fin de fichier
 	this.height = 0;
-	
+		
 	// largeur de la carte
 	this.width = mapWidth = mapLines[0].length;
 	// contenu de la carte sous forme d'une matrice
@@ -19,12 +25,61 @@ function Map(mapText, spriteMgr){
 		// ignore les lignes vides
 		if(mapLines[i]){ 
 			this.content[i] = mapLines[i].split("");
+			
+			var heroIndex = mapLines[i].indexOf("M");
+			if(heroIndex>-1){
+				this.heroCoords = [heroIndex, i];
+			}
+			
 			this.height++;
 		}
 	}
 	
-	// coordonnée du héros
-	this.heroCoords = [0,0];
+	this.computeView();
+	
+}
+
+
+
+// calcul les coordonnees de la vue autour du héros
+Map.prototype.computeView = function(){
+	var i = this.heroCoords[1]-3;
+	// si la vue déborde la carte, on la recadre
+	if(i<0) i = 0;
+	var i_max = i+this.viewHeight;
+	// si la vue déborde la carte, on la recadre
+	if(i_max>= this.height){
+		i_max = this.height;
+		i = i_max - this.viewHeight;
+	}
+	
+	var j = this.heroCoords[0]-3;
+	// si la vue déborde la carte, on la recadre
+	if(j<0) j = 0;
+	
+	var j_max = j+this.viewWidth;
+	
+	// si la vue déborde la carte, on la recadre
+	if(j_max>= this.width){
+		j_max = this.width;
+		j = j_max - this.viewWidth;
+	}
+	
+	this.view = {
+		topLeft: [j, i],
+		bottomRight : [j_max, i_max]
+	}
+
+}
+
+
+Map.prototype.mapToViewX = function(x){
+	return x - this.view.topLeft[0];
+}
+
+
+Map.prototype.mapToViewY = function(y){
+	return y - this.view.topLeft[1];
 }
 
 // test si des coordonnées sont dans la carte
@@ -73,8 +128,11 @@ Map.prototype.getAdjacents = function(x, y){
 // rendu de la carte
 Map.prototype.render = function(){
 	
-	for(i=0; i<this.height; i++){
-		for(j=0; j<this.width; j++){
+	this.computeView();
+	
+	
+	for(var i = this.view.topLeft[1]; i<this.view.bottomRight[1]; i++){
+		for(var j = this.view.topLeft[0]; j<this.view.bottomRight[0]; j++){
 			var tileType = this.content[i][j];
 			switch(tileType){
 				// case eau
@@ -112,11 +170,11 @@ Map.prototype.drawWater = function(x, y){
 	// un trou d'eau est une case d'eau entrourée de case terre
 	if(this.isWaterHole(x,y)){
 
-		this.spriteMgr.drawWaterHole(x,y);
+		this.spriteMgr.drawWaterHole(this.mapToViewX(x), this.mapToViewY(y));
 
 	}else{
 
-		this.spriteMgr.drawRandomWater(x,y);
+		this.spriteMgr.drawRandomWater(this.mapToViewX(x), this.mapToViewY(y));
 
 	}
 }
@@ -152,7 +210,7 @@ Map.prototype.drawLand = function(x, y){
 	
 	if(plainLand){ // plain land
 
-		this.spriteMgr.drawPlainLand(x, y);
+		this.spriteMgr.drawPlainLand(this.mapToViewX(x), this.mapToViewY(y));
 
 	}else{
 		
@@ -164,7 +222,7 @@ Map.prototype.drawLand = function(x, y){
 			&& isLandTile.test(adjacents.getBottom())
 		){
 			
-			this.spriteMgr.drawInnerCornerTopLeft(x, y);
+			this.spriteMgr.drawInnerCornerTopLeft(this.mapToViewX(x), this.mapToViewY(y));
 		
 		}else if( // inner corner top right
 			isLandTile.test(adjacents.getLeft()) 
@@ -173,7 +231,7 @@ Map.prototype.drawLand = function(x, y){
 			&& isLandTile.test(adjacents.getBottom())
 		){
 			
-			this.spriteMgr.drawInnerCornerTopRight(x, y);
+			this.spriteMgr.drawInnerCornerTopRight(this.mapToViewX(x), this.mapToViewY(y));
 		
 		}else if( // inner corner bottom right
 			isLandTile.test(adjacents.getLeft()) 
@@ -182,7 +240,7 @@ Map.prototype.drawLand = function(x, y){
 			&& isLandTile.test(adjacents.getTop())
 		){
 		
-			this.spriteMgr.drawInnerCornerBottomRight(x, y);
+			this.spriteMgr.drawInnerCornerBottomRight(this.mapToViewX(x), this.mapToViewY(y));
 		
 		}else if( // inner corner bottom left
 			isLandTile.test(adjacents.getRight()) 
@@ -191,7 +249,7 @@ Map.prototype.drawLand = function(x, y){
 			&& isLandTile.test(adjacents.getTop())
 		){
 		
-			this.spriteMgr.drawInnerCornerBottomLeft(x, y);
+			this.spriteMgr.drawInnerCornerBottomLeft(this.mapToViewX(x), this.mapToViewY(y));
 		
 		}
 		
@@ -203,7 +261,7 @@ Map.prototype.drawLand = function(x, y){
 			&& isLandTile.test(adjacents.getTop())
 		){
 		
-			this.spriteMgr.drawShoreLeft(x, y);
+			this.spriteMgr.drawShoreLeft(this.mapToViewX(x), this.mapToViewY(y));
 		
 		}else if( // shore left
 			isWaterTile.test(adjacents.getLeft())
@@ -212,7 +270,7 @@ Map.prototype.drawLand = function(x, y){
 			&& isLandTile.test(adjacents.getTop())
 		){
 		
-			this.spriteMgr.drawShoreRight(x, y);
+			this.spriteMgr.drawShoreRight(this.mapToViewX(x), this.mapToViewY(y));
 		
 		}else if( // shore top 
 			isWaterTile.test(adjacents.getBottom()) 
@@ -221,7 +279,7 @@ Map.prototype.drawLand = function(x, y){
 			&& isLandTile.test(adjacents.getRight())
 		){
 		
-			this.spriteMgr.drawShoreTop(x, y);
+			this.spriteMgr.drawShoreTop(this.mapToViewX(x), this.mapToViewY(y));
 		
 		}else if( // shore bottom
 			isWaterTile.test(adjacents.getTop()) 
@@ -230,7 +288,7 @@ Map.prototype.drawLand = function(x, y){
 			&& isLandTile.test(adjacents.getRight())
 		){
 		
-			this.spriteMgr.drawShoreBottom(x, y);
+			this.spriteMgr.drawShoreBottom(this.mapToViewX(x), this.mapToViewY(y));
 		
 		}
 		
@@ -241,7 +299,7 @@ Map.prototype.drawLand = function(x, y){
 			&& isWaterTile.test(adjacents.getTop())
 		){
 		
-			this.spriteMgr.drawOuterCornerTopLeft(x, y);
+			this.spriteMgr.drawOuterCornerTopLeft(this.mapToViewX(x), this.mapToViewY(y));
 		
 		}
 		
@@ -252,7 +310,7 @@ Map.prototype.drawLand = function(x, y){
 			&& isWaterTile.test(adjacents.getTop())
 		){
 		
-			this.spriteMgr.drawOuterCornerTopRight(x, y);
+			this.spriteMgr.drawOuterCornerTopRight(this.mapToViewX(x), this.mapToViewY(y));
 		
 		}else if( // outer corner bottom right
 			isWaterTile.test(adjacents.getRight()) 
@@ -260,7 +318,7 @@ Map.prototype.drawLand = function(x, y){
 			&& isWaterTile.test(adjacents.getBottom())
 		){
 		
-			this.spriteMgr.drawOuterCornerBottomRight(x, y);
+			this.spriteMgr.drawOuterCornerBottomRight(this.mapToViewX(x), this.mapToViewY(y));
 		
 		}else if( // outer corner bottom left
 			isWaterTile.test(adjacents.getLeft()) 
@@ -268,7 +326,7 @@ Map.prototype.drawLand = function(x, y){
 			&& isWaterTile.test(adjacents.getBottom())
 		){
 		
-			this.spriteMgr.drawOuterCornerBottomLeft(x, y);
+			this.spriteMgr.drawOuterCornerBottomLeft(this.mapToViewX(x), this.mapToViewY(y));
 		
 		}
 	
@@ -276,17 +334,15 @@ Map.prototype.drawLand = function(x, y){
 	
 }
 Map.prototype.drawHero = function(x, y){
-	// set/update hero position
-	this.heroCoords = [x,y];
 	// water beneath ship
-	this.spriteMgr.drawRandomWater(x,y);
-	this.spriteMgr.drawHeroShip(x,y);
+	this.spriteMgr.drawRandomWater(this.mapToViewX(x), this.mapToViewY(y));
+	this.spriteMgr.drawHeroShip(this.mapToViewX(x), this.mapToViewY(y));
 }
 
 Map.prototype.drawPirate = function(x, y){
 	// water beneath ship
-	this.spriteMgr.drawRandomWater(x,y);
-	this.spriteMgr.drawPirateShip(x,y);
+	this.spriteMgr.drawRandomWater(this.mapToViewX(x), this.mapToViewY(y));
+	this.spriteMgr.drawPirateShip(this.mapToViewX(x), this.mapToViewY(y));
 }
 
 
@@ -305,8 +361,13 @@ Map.prototype.moveHero = function(offset_x, offset_y){
 	// modifier la carte
 	this.setTile(this.heroCoords[0], this.heroCoords[1], "~");
 	this.setTile(target_x, target_y, "M");
+	
 	// redessiner les cases de départ et de destination
-	this.spriteMgr.drawRandomWater(this.heroCoords[0], this.heroCoords[1]);
-	this.drawHero(target_x, target_y); // met à jour les coordonnées
+	// this.spriteMgr.drawRandomWater(this.heroCoords[0], this.heroCoords[1]);
+	// this.drawHero(target_x, target_y); 
+	
+	// met à jour les coordonnées
+	this.heroCoords = [target_x, target_y];
+	this.render();
 }
 

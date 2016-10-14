@@ -1,7 +1,9 @@
 document.addEventListener("DOMContentLoaded", function(){
 
 	var tile_height = 32,
-		tile_width = 32;
+		tile_width = 32,
+		viewWidth = 7;
+		viewHeight = 7;
 
 	
 	var board = document.getElementById("board"),
@@ -44,11 +46,11 @@ document.addEventListener("DOMContentLoaded", function(){
 		
 		
 		var spriteMgr = new SpriteManager(sprites, tile_width, tile_height, ctx);
-		var map = new Map(mapText, spriteMgr);
+		var map = new Map(mapText, spriteMgr, viewWidth, viewHeight);
 		
 		// redimensionne le canvas selon la taille de la carte
-		board.width = (map.width+1) * tile_width;
-		board.height = (map.height+1) * tile_height;
+		board.width = viewWidth * tile_width;
+		board.height = viewWidth * tile_height;
 		
 		// affichage de la carte
 		map.render();
