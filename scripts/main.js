@@ -74,7 +74,13 @@ document.addEventListener("DOMContentLoaded", function(){
 				offset_y += 1;
 			}
 			map.moveHero(offset_x, offset_y);
-		})	
+		})
+		
+		
+		// animate water
+		setInterval(function(){
+			map.render();
+		}, 1000/6);
 		
 	}
 		
