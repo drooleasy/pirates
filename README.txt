@@ -9,3 +9,5 @@ $ php -S localhost:8080
 from a terminal in the root directory and then go to http://localhost:8080
 
 tested in Firefox, IE9 and Chromium.
+
+Alternatively, see a demo here : https://drooleasy.github.io/pirates/
